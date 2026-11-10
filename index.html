@@ -16,7 +16,7 @@
     <header class="topbar">
       <a class="brand" href="#" aria-label="WordWise home"><span class="brand-mark">W</span><span>word<span class="brand-light">wise</span></span></a>
       <nav><a href="#search-section" class="nav-link active">Dictionary</a><a href="#features" class="nav-link">Features</a></nav>
-      <button class="history-toggle" id="historyToggle" type="button"><span>◷</span> History</button>
+      <div class="header-actions"><button class="history-toggle" id="savedMeaningsToggle" type="button"><span>♥</span> Saved meanings</button><button class="history-toggle" id="historyToggle" type="button"><span>◷</span> History</button></div>
     </header>
     <main>
       <section class="hero" id="search-section">
@@ -86,6 +86,12 @@
       <div class="modal-head"><div><div class="section-kicker">YOUR VOCABULARY</div><h2 id="historyTitle">Recent words</h2></div><button id="closeHistory" class="icon-button" aria-label="Close history">✕</button></div>
       <div id="historyList" class="history-list"></div>
       <button id="clearHistory" class="clear-button" type="button">Clear history</button>
+    </section>
+  </div>
+  <div class="modal-backdrop" id="savedMeaningsModal" aria-hidden="true">
+    <section class="history-modal saved-meanings-modal" role="dialog" aria-modal="true" aria-labelledby="savedMeaningsTitle">
+      <div class="modal-head"><div><div class="section-kicker">YOUR PERSONAL GLOSSARY</div><h2 id="savedMeaningsTitle">Saved meanings</h2></div><button id="closeSavedMeanings" class="icon-button" aria-label="Close saved meanings">✕</button></div>
+      <div id="savedMeaningsList" class="history-list"></div>
     </section>
   </div>
   <script src="app.js"></script>
