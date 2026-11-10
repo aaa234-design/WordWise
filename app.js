@@ -8,6 +8,20 @@ const languageSelect = $('#languageSelect');
 const translationResult = $('#translationResult');
 let currentWord = '';
 let currentAudio = '';
+let currentEntry = null;
+
+// Speak text using voices available in the visitor's browser/device.
+function speakText(text, language = 'en') {
+  if (!('speechSynthesis' in window)) { showToast('Voice playback is not supported in this browser.'); return; }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = language;
+  const voices = window.speechSynthesis.getVoices();
+  const voice = voices.find(item => item.lang.toLowerCase() === language.toLowerCase()) || voices.find(item => item.lang.toLowerCase().startsWith(language.split('-')[0].toLowerCase()));
+  if (voice) utterance.voice = voice;
+  utterance.rate = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
 let history = JSON.parse(localStorage.getItem('wordwise-history') || '[]');
 let favourites = JSON.parse(localStorage.getItem('wordwise-favourites') || '[]');
 
@@ -40,6 +54,7 @@ function renderHistory() {
   }));
 }
 function renderWord(entry) {
+  currentEntry = entry;
   const meanings = entry.meanings || [];
   const firstMeaning = meanings[0] || {};
   const definitions = firstMeaning.definitions || [];
@@ -55,10 +70,15 @@ function renderWord(entry) {
   }).join('');
   resultArea.innerHTML = '<div class="word-top"><div><h2 class="word-title">' + escapeHtml(entry.word || currentWord) + '</h2><div class="phonetic">' + escapeHtml(phonetic) + '</div></div><div class="word-actions">' +
     (audio ? '<button class="icon-button" id="audioButton" aria-label="Play pronunciation" title="Play pronunciation">♫</button>' : '') +
+    '<button class="icon-button" id="speakDefinitionButton" aria-label="Read definition aloud" title="Read definition aloud">🔊</button>' +
     '<button class="icon-button ' + (saved ? 'saved' : '') + '" id="favouriteButton" aria-label="Save favourite" title="Save favourite">' + (saved ? '♥' : '♡') + '</button></div></div>' +
     meaningHtml + (meanings.length > 3 ? '<div class="more-meanings">+' + (meanings.length - 3) + ' more word meanings available</div>' : '');
   const audioButton = $('#audioButton');
   if (audioButton) audioButton.addEventListener('click', () => new Audio(currentAudio).play().catch(() => showToast('Audio could not be played.')));
+  $('#speakDefinitionButton').addEventListener('click', () => {
+    const spoken = meanings.map(m => (m.definitions || []).slice(0, 2).map(d => d.definition).join('. ')).join('. ');
+    speakText((entry.word || currentWord) + '. ' + spoken, 'en');
+  });
   $('#favouriteButton').addEventListener('click', toggleFavourite);
 }
 function toggleFavourite() {
@@ -108,7 +128,8 @@ async function translateWord() {
     const data = await response.json();
     const translated = data?.responseData?.translatedText;
     if (!translated || data.responseStatus !== 200) throw new Error('Could not translate this word right now.');
-    translationResult.textContent = translated;
+    translationResult.innerHTML = '<span>' + escapeHtml(translated) + '</span> <button type="button" class="icon-button speak-translation" aria-label="Listen to translation" title="Listen to translation">🔊</button>';
+    translationResult.querySelector('.speak-translation').addEventListener('click', () => speakText(translated, target));
   } catch (error) {
     translationResult.textContent = error.message;
   } finally {
