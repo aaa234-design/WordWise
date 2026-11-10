@@ -82,7 +82,7 @@ voiceGenderSelect.addEventListener('change', () => {
   showToast('Voice preference saved');
 });
 voiceSelect.addEventListener('change', () => {
-  const voice = availableVoices[Number(voiceSelect.value)];
+  const voice = voiceSelect.value !== '' ? availableVoices[Number(voiceSelect.value)] : null;
   if (voice) localStorage.setItem('wordwise-voice-id', voice.name + '|' + voice.lang);
   else localStorage.removeItem('wordwise-voice-id');
   showToast('Device voice preference saved');
