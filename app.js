@@ -17,6 +17,7 @@ let currentEntry = null;
 let searchSequence = 0;
 let history = readStorage('wordwise-history', []);
 let favourites = readStorage('wordwise-favourites', []);
+let savedMeanings = readStorage('wordwise-saved-meanings', []);
 let availableVoices = [];
 
 function readStorage(key, fallback) {
@@ -215,6 +216,36 @@ function addDetailsControls() {
   $('#translateDetailsButton').addEventListener('click', translateFullDetails);
 }
 
+function makeMeaningKey(word, language, original, translated) {
+  return [word.toLowerCase(), language, original, translated].join('::');
+}
+
+function renderSavedMeanings() {
+  const list = $('#savedMeaningsList');
+  if (!savedMeanings.length) {
+    list.innerHTML = '<p class="no-history">No saved meanings yet. Use “Save meaning” beside a translated definition.</p>';
+    return;
+  }
+  list.innerHTML = savedMeanings.map((item, index) =>
+    '<article class="saved-meaning-item"><div class="saved-meaning-meta">' + escapeHtml(item.word) + ' · ' + escapeHtml(item.languageName) +
+    ' · ' + escapeHtml(item.partOfSpeech) + '</div><p>' + escapeHtml(item.translatedDefinition) + '</p>' +
+    (item.translatedExample ? '<div class="example-box">“' + escapeHtml(item.translatedExample) + '”</div>' : '') +
+    '<p class="saved-original"><strong>English:</strong> ' + escapeHtml(item.definition) + '</p>' +
+    '<button type="button" class="text-speak-button" data-saved-speak="' + index + '">🔊 Listen</button> ' +
+    '<button type="button" class="text-speak-button" data-saved-delete="' + index + '">Remove</button></article>'
+  ).join('');
+  list.querySelectorAll('[data-saved-speak]').forEach(button => button.addEventListener('click', () => {
+    const item = savedMeanings[Number(button.dataset.savedSpeak)];
+    speakText(item.translatedDefinition + (item.translatedExample ? '. ' + item.translatedExample : ''), item.language);
+  }));
+  list.querySelectorAll('[data-saved-delete]').forEach(button => button.addEventListener('click', () => {
+    savedMeanings.splice(Number(button.dataset.savedDelete), 1);
+    localStorage.setItem('wordwise-saved-meanings', JSON.stringify(savedMeanings));
+    renderSavedMeanings();
+    showToast('Saved meaning removed');
+  }));
+}
+
 function toggleFavourite() {
   const exists = favourites.some(word => word.toLowerCase() === currentWord.toLowerCase());
   favourites = exists
@@ -274,13 +305,17 @@ async function translateFullDetails() {
     const html = '<div class="localized-heading"><div><span class="section-kicker">TRANSLATED DICTIONARY</span><h3>' +
       escapeHtml(languageName) + ' — ' + escapeHtml(currentEntry.word || currentWord) +
       '</h3></div><button type="button" class="icon-button" id="speakAllDetails" title="Read translated details aloud" aria-label="Read translated details aloud">🔊</button></div>' +
-      output.map((item, index) =>
-        '<article class="localized-definition"><span class="part-of-speech">' + escapeHtml(item.partOfSpeech) +
-        '</span><p><span class="meaning-number">' + (index + 1) + '.</span>' +
-        escapeHtml(item.translatedDefinition) + '</p>' +
-        (item.translatedExample ? '<div class="example-box">“' + escapeHtml(item.translatedExample) + '”</div>' : '') +
-        '<button type="button" class="text-speak-button" data-speak-index="' + index + '">🔊 Listen to this meaning</button></article>'
-      ).join('');
+      output.map((item, index) => {
+        const key = makeMeaningKey(requestedWord, target, item.definition, item.translatedDefinition);
+        const isSaved = savedMeanings.some(saved => saved.key === key);
+        return '<article class="localized-definition"><span class="part-of-speech">' + escapeHtml(item.partOfSpeech) +
+          '</span><p><span class="meaning-number">' + (index + 1) + '.</span>' +
+          escapeHtml(item.translatedDefinition) + '</p>' +
+          (item.translatedExample ? '<div class="example-box">“' + escapeHtml(item.translatedExample) + '”</div>' : '') +
+          '<div class="meaning-actions"><button type="button" class="text-speak-button" data-speak-index="' + index + '">🔊 Listen</button>' +
+          '<button type="button" class="text-speak-button" data-save-index="' + index + '">' +
+          (isSaved ? '♥ Saved' : '♡ Save meaning') + '</button></div></article>';
+      }).join('');
     localizedDetails.querySelector('.localized-results')?.remove();
     const results = document.createElement('div');
     results.className = 'localized-results';
@@ -290,6 +325,24 @@ async function translateFullDetails() {
       speakText(output.map(item => item.translatedDefinition +
         (item.translatedExample ? '. ' + item.translatedExample : '')).join('. '), target);
     });
+    results.querySelectorAll('[data-save-index]').forEach(saveButton => saveButton.addEventListener('click', () => {
+      const item = output[Number(saveButton.dataset.saveIndex)];
+      const key = makeMeaningKey(requestedWord, target, item.definition, item.translatedDefinition);
+      const existing = savedMeanings.findIndex(saved => saved.key === key);
+      if (existing >= 0) {
+        savedMeanings.splice(existing, 1);
+        saveButton.textContent = '♡ Save meaning';
+        showToast('Meaning removed from saved list');
+      } else {
+        savedMeanings.unshift({ key, word: requestedWord, language: target, languageName,
+          partOfSpeech: item.partOfSpeech, definition: item.definition,
+          translatedDefinition: item.translatedDefinition, example: item.example,
+          translatedExample: item.translatedExample, savedAt: Date.now() });
+        saveButton.textContent = '♥ Saved';
+        showToast('Meaning saved');
+      }
+      localStorage.setItem('wordwise-saved-meanings', JSON.stringify(savedMeanings));
+    }));
     results.querySelectorAll('[data-speak-index]').forEach(speakButton => {
       speakButton.addEventListener('click', () => {
         const item = output[Number(speakButton.dataset.speakIndex)];
@@ -370,6 +423,14 @@ document.querySelectorAll('.example-word').forEach(button =>
   button.addEventListener('click', () => searchWord(button.textContent))
 );
 translateButton.addEventListener('click', translateWord);
+$('#savedMeaningsToggle').addEventListener('click', () => {
+  renderSavedMeanings();
+  $('#savedMeaningsModal').classList.add('open');
+});
+$('#closeSavedMeanings').addEventListener('click', () => $('#savedMeaningsModal').classList.remove('open'));
+$('#savedMeaningsModal').addEventListener('click', event => {
+  if (event.target.id === 'savedMeaningsModal') event.currentTarget.classList.remove('open');
+});
 $('#historyToggle').addEventListener('click', () => {
   renderHistory();
   $('#historyModal').classList.add('open');
@@ -385,5 +446,8 @@ $('#clearHistory').addEventListener('click', () => {
   showToast('Search history cleared');
 });
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') $('#historyModal').classList.remove('open');
+  if (event.key === 'Escape') {
+    $('#historyModal').classList.remove('open');
+    $('#savedMeaningsModal').classList.remove('open');
+  }
 });
