@@ -17,8 +17,16 @@ function speakText(text, language = 'en') {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = language;
   const voices = window.speechSynthesis.getVoices();
-  const voice = voices.find(item => item.lang.toLowerCase() === language.toLowerCase()) || voices.find(item => item.lang.toLowerCase().startsWith(language.split('-')[0].toLowerCase()));
+  const languageVoices = voices.filter(item => item.lang.toLowerCase() === language.toLowerCase() || item.lang.toLowerCase().startsWith(language.split('-')[0].toLowerCase()));
+  const style = $('#voiceGenderSelect')?.value || 'female';
+  const femaleNames = /female|woman|zira|samantha|victoria|karen|susan|aria|jenny|sara|google हिन्दी/i;
+  const maleNames = /male|man|david|mark|daniel|james|george|guy|ryan|alex/i;
+  const preferredVoice = style === 'default' ? null : languageVoices.find(item => (style === 'female' ? femaleNames : maleNames).test(item.name));
+  const voice = preferredVoice || languageVoices[0] || voices.find(item => item.lang.toLowerCase().startsWith(language.split('-')[0].toLowerCase()));
   if (voice) utterance.voice = voice;
+  if (style !== 'default' && languageVoices.length && !preferredVoice) {
+    showToast('Selected voice not available for this language. Using an available voice.');
+  }
   utterance.rate = 0.9;
   window.speechSynthesis.speak(utterance);
 }
@@ -26,6 +34,14 @@ let history = JSON.parse(localStorage.getItem('wordwise-history') || '[]');
 let favourites = JSON.parse(localStorage.getItem('wordwise-favourites') || '[]');
 
 $('#year').textContent = new Date().getFullYear();
+const voiceGenderSelect = $('#voiceGenderSelect');
+if (voiceGenderSelect) {
+  voiceGenderSelect.value = localStorage.getItem('wordwise-voice-style') || 'female';
+  voiceGenderSelect.addEventListener('change', () => {
+    localStorage.setItem('wordwise-voice-style', voiceGenderSelect.value);
+    showToast('Voice preference saved');
+  });
+}
 
 function showToast(message) {
   const toast = $('#toast');
