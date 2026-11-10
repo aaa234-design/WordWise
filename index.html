@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#101827">
-  <meta name="description" content="WordWise is a free multilingual dictionary. Discover definitions, pronunciation, examples and translations.">
+  <meta name="description" content="WordWise multilingual dictionary with detailed translated meanings, examples and speech.">
   <title>WordWise — Your world of words</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,17 +18,15 @@
       <nav><a href="#search-section" class="nav-link active">Dictionary</a><a href="#features" class="nav-link">Features</a></nav>
       <button class="history-toggle" id="historyToggle" type="button"><span>◷</span> History</button>
     </header>
-
     <main>
       <section class="hero" id="search-section">
         <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR PERSONAL LANGUAGE COMPANION</div>
         <h1>Every word opens<br><span>a new world.</span></h1>
         <p class="hero-copy">Explore meanings, discover translations, and grow your vocabulary — one word at a time.</p>
-
         <form class="search-panel" id="searchForm">
-          <label class="sr-only" for="wordInput">Enter a word</label>
+          <label class="sr-only" for="wordInput">Enter an English word</label>
           <span class="search-icon">⌕</span>
-          <input id="wordInput" type="text" placeholder="Type a word to discover..." autocomplete="off" required>
+          <input id="wordInput" type="text" placeholder="Type an English word to discover..." autocomplete="off" required>
           <button class="search-button" type="submit">Search <span>↗</span></button>
         </form>
         <div class="search-hint">Try a word: <button class="example-word" type="button">serendipity</button><button class="example-word" type="button">beautiful</button><button class="example-word" type="button">courage</button></div>
@@ -36,32 +34,34 @@
 
       <section class="workspace" aria-live="polite">
         <div class="result-column">
-          <div class="section-kicker" id="resultKicker">WORD OF THE DAY</div>
+          <div class="section-kicker" id="resultKicker">DICTIONARY RESULT</div>
           <div id="resultArea" class="result-card">
-            <div class="empty-state">
-              <div class="empty-icon">Aa</div>
-              <h2>Your next word is waiting.</h2>
-              <p>Search any English word above to see its definition, pronunciation, examples and translation.</p>
-            </div>
+            <div class="empty-state"><div class="empty-icon">Aa</div><h2>Your next word is waiting.</h2><p>Search an English word to see definitions, phonetics, examples and translations.</p></div>
           </div>
+          <section id="localizedDetails" class="localized-card" aria-live="polite">
+            <div class="localized-empty">Translated dictionary details will appear here after you search for a word.</div>
+          </section>
         </div>
         <aside class="side-column">
           <div class="translate-card">
             <div class="card-heading"><div><span class="mini-icon">文</span><h3>Quick translate</h3></div><span class="live-tag">LIVE</span></div>
-            <p class="muted">Translate your searched word into another language.</p>
+            <p class="muted">Translate the searched word into another language.</p>
             <label for="languageSelect">Translate to</label>
-            <select id="languageSelect">
-              <option value="ur">Urdu — اردو</option><option value="es">Spanish — Español</option><option value="fr">French — Français</option><option value="ar">Arabic — العربية</option><option value="hi">Hindi — हिन्दी</option><option value="de">German — Deutsch</option><option value="it">Italian — Italiano</option><option value="tr">Turkish — Türkçe</option><option value="zh-CN">Chinese — 中文</option><option value="ja">Japanese — 日本語</option><option value="pt">Portuguese — Português</option><option value="ru">Russian — Русский</option>
-            </select>
-            <label for="voiceGenderSelect" class="voice-label">Voice style</label>
-            <select id="voiceGenderSelect">
-              <option value="female">Female voice</option>
-              <option value="male">Male voice</option>
-              <option value="default">Default voice</option>
+            <select id="languageSelect" class="language-select">
+              <option value="ur">Urdu — اردو</option><option value="es">Spanish — Español</option><option value="fr">French — Français</option><option value="ar">Arabic — العربية</option><option value="hi">Hindi — हिन्दी</option><option value="de">German — Deutsch</option><option value="it">Italian — Italiano</option><option value="tr">Turkish — Türkçe</option><option value="zh-CN">Chinese — 中文</option><option value="ja">Japanese — 日本語</option><option value="pt">Portuguese — Português</option><option value="ru">Russian — Русский</option><option value="bn">Bengali — বাংলা</option><option value="pa">Punjabi — ਪੰਜਾਬੀ</option><option value="ko">Korean — 한국어</option><option value="nl">Dutch — Nederlands</option>
             </select>
             <button id="translateButton" class="translate-button" type="button" disabled>Translate word <span>→</span></button>
             <div id="translationResult" class="translation-result"><span class="translation-placeholder">Your translation will appear here.</span></div>
-            <p class="api-note">Translations powered by MyMemory API.</p>
+            <p class="api-note">Translation quality and availability depend on the free translation provider.</p>
+          </div>
+          <div class="voice-card">
+            <div class="card-heading"><div><span class="mini-icon">♫</span><h3>Voice settings</h3></div></div>
+            <p class="muted">Choose a voice installed on your device. WordWise matches the spoken language to the selected text.</p>
+            <label for="voiceGenderSelect">Voice preference</label>
+            <select id="voiceGenderSelect"><option value="female">Prefer female voice</option><option value="male">Prefer male voice</option><option value="default">System default</option></select>
+            <label for="voiceSelect">Available device voice</label>
+            <select id="voiceSelect"><option value="">Loading device voices…</option></select>
+            <p id="voiceStatus" class="api-note" role="status">Voice list is provided by your browser or operating system.</p>
           </div>
           <div class="tip-card"><span class="tip-spark">✳</span><div><strong>Word tip</strong><p>Learning a new word? Try using it in a sentence to help remember it.</p></div></div>
         </aside>
@@ -71,16 +71,15 @@
         <div class="section-kicker">MADE FOR THE CURIOUS</div>
         <h2>A little more than a dictionary.</h2>
         <div class="feature-grid">
-          <article class="feature"><span class="feature-icon purple">Aa</span><h3>Clear definitions</h3><p>Understand words with simple definitions and useful examples.</p></article>
-          <article class="feature"><span class="feature-icon green">文</span><h3>Multiple languages</h3><p>Translate words into Urdu and many other languages.</p></article>
-          <article class="feature"><span class="feature-icon orange">♫</span><h3>Hear pronunciation</h3><p>Listen to how words are pronounced with one tap.</p></article>
+          <article class="feature"><span class="feature-icon purple">Aa</span><h3>Clear definitions</h3><p>Understand words with multiple meanings, parts of speech and examples.</p></article>
+          <article class="feature"><span class="feature-icon green">文</span><h3>Multilingual details</h3><p>Read translated definitions and examples in many languages.</p></article>
+          <article class="feature"><span class="feature-icon orange">♫</span><h3>Multilingual speech</h3><p>Listen to English and translated text using available device voices.</p></article>
           <article class="feature"><span class="feature-icon blue">♡</span><h3>Save your words</h3><p>Keep favourite words close and revisit your search history.</p></article>
         </div>
       </section>
     </main>
     <footer><a class="brand footer-brand" href="#"><span class="brand-mark">W</span><span>word<span class="brand-light">wise</span></span></a><span>Made for curious minds. © <span id="year"></span> WordWise</span></footer>
   </div>
-
   <div class="toast" id="toast" role="status"></div>
   <div class="modal-backdrop" id="historyModal" aria-hidden="true">
     <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
