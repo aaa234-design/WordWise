@@ -52,3 +52,12 @@ Search history, favourites and voice preferences are stored in local browser sto
 ## License
 
 This project is provided for learning and personal use. Add a license file if you intend to distribute it under a specific open-source license.
+
+
+## Saved meanings and voice options
+
+- Save individual translated definitions, along with the English original and example, to a personal glossary using **Save meaning**.
+- Open **Saved meanings** in the header to review, listen to, or remove saved entries.
+- Saved meanings, favourites, search history and voice preferences are stored in this browser's local storage. They are not synced between devices; clearing browser site data can remove them.
+- Choose an installed voice from **Available device voice**. Female/male are best-effort preferences because browsers do not expose a reliable universal voice-gender field. Voice availability varies by language and operating system.
+- Translation is machine-generated and may be imperfect; use a trusted human translator for high-stakes or formal material.
