@@ -1,40 +1,39 @@
 # WordWise — Multilingual Dictionary
 
-WordWise is a responsive, browser-based English dictionary and multilingual word translator. Search a word to explore its definitions, phonetic spelling, examples and translation.
+WordWise is a responsive browser-based English dictionary and multilingual learning tool. It shows dictionary definitions, phonetic spelling, examples, translated definitions and examples, and speech playback using voices installed on the user's device.
 
 ## Features
 
-- English word lookup with multiple meanings and parts of speech
-- Phonetic spelling and audio pronunciation when available
-- Example sentences
-- Translation into Urdu, Spanish, French, Arabic, Hindi, German, Italian, Turkish, Chinese, Japanese, Portuguese and Russian
-- Recent search history saved in the browser
-- Favourite words saved in the browser
-- Responsive layout for desktop, tablet and mobile
-- Helpful loading, empty and error states
+- English dictionary lookup with multiple meanings and parts of speech
+- Phonetic spelling and dictionary audio when supplied by the dictionary API
+- Example sentences for definitions when available
+- Translate the searched word into Urdu, Arabic, Hindi, Spanish, French, German, Italian, Turkish, Chinese, Japanese, Portuguese, Russian, Bengali, Punjabi, Korean and Dutch
+- Translate multiple dictionary definitions and example sentences into the selected language
+- Read translated definitions and examples aloud
+- Browser/device speech voices, with female/male preference heuristics, system default, and optional selection of an installed voice
+- Recent search history and favourites stored locally in the browser
+- Responsive desktop and mobile layout
+- Loading, empty and error states
 
 ## Run locally
 
 No build tools or package installation are required.
 
 1. Download or clone this repository.
-2. Open `index.html` in a modern browser.
-3. Make sure you have an internet connection so the dictionary and translation APIs can respond.
+2. Open `index.html` in a modern browser, or run a local server:
+   ```bash
+   python -m http.server 8000
+   ```
+3. Open http://localhost:8000.
+4. Keep an internet connection active because dictionary and translation data come from public APIs.
 
-Alternatively, run a local server from the project folder:
+## APIs and limitations
 
-```bash
-python -m http.server 8000
-```
+- Definitions, phonetics and dictionary audio: [Free Dictionary API](https://dictionaryapi.dev/)
+- Word and definition translations: [MyMemory Translation API](https://mymemory.translated.net/)
+- Speech: browser Web Speech API (`speechSynthesis`), using voices installed or made available by the operating system/browser
 
-Then open http://localhost:8000.
-
-## APIs
-
-- Definitions and phonetics: [Free Dictionary API](https://dictionaryapi.dev/)
-- Translations: [MyMemory Translation API](https://mymemory.translated.net/)
-
-The app uses public endpoints directly from the browser. Their availability, usage limits and terms are controlled by the API providers. Translation quality may vary by language and context.
+The project does not contain its own translation engine or voice recordings. Translation quality, request limits and availability depend on MyMemory. Not every word has every definition/example, and not every device has male and female voices for every language. Browsers do not provide a consistent standardized voice-gender property; the gender preference therefore uses voice-name hints and falls back to a matching-language voice. Choosing an installed voice explicitly is more reliable.
 
 ## Project structure
 
@@ -46,11 +45,9 @@ WordWise/
 └── README.md
 ```
 
-## Notes
+## Privacy
 
-- Search is designed for English source words.
-- Search history and favourites use browser local storage and stay on the current device/browser.
-- This is a front-end project; it does not require a database or backend server.
+Search history, favourites and voice preferences are stored in local browser storage. Dictionary and translation requests are sent to the public API providers.
 
 ## License
 
