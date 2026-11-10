@@ -246,7 +246,11 @@ async function translateFullDetails() {
   if (!currentEntry) return;
   const button = $('#translateDetailsButton');
   const target = $('#detailLanguageSelect').value;
+  const requestedEntry = currentEntry;
+  const requestedWord = currentWord;
   const items = getDefinitionItems(currentEntry);
+  localizedDetails.querySelector('.localized-empty')?.remove();
+  localizedDetails.querySelector('.translation-error')?.remove();
   if (!items.length) {
     localizedDetails.insertAdjacentHTML('beforeend', '<p class="translation-error">No definitions are available to translate.</p>');
     return;
@@ -265,6 +269,7 @@ async function translateFullDetails() {
       }
       output.push({ ...item, translatedDefinition, translatedExample });
     }
+    if (currentEntry !== requestedEntry || currentWord !== requestedWord) return;
     const languageName = $('#detailLanguageSelect').selectedOptions[0].textContent;
     const html = '<div class="localized-heading"><div><span class="section-kicker">TRANSLATED DICTIONARY</span><h3>' +
       escapeHtml(languageName) + ' — ' + escapeHtml(currentEntry.word || currentWord) +
