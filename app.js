@@ -75,12 +75,20 @@ if ('speechSynthesis' in window) {
   // Some browsers fire voiceschanged only after getVoices() is called again.
   setTimeout(refreshVoiceList, 500);
 }
-voiceGenderSelect.value = localStorage.getItem('wordwise-voice-style') || 'female';
+if (!localStorage.getItem('wordwise-voice-style')) localStorage.setItem('wordwise-voice-style', 'male');
+voiceGenderSelect.value = localStorage.getItem('wordwise-voice-style') || 'male';
 voiceGenderSelect.addEventListener('change', () => {
   localStorage.setItem('wordwise-voice-style', voiceGenderSelect.value);
   localStorage.removeItem('wordwise-voice-id');
   voiceSelect.value = '';
   showToast('Voice preference saved');
+});
+$('#saveVoiceSettings').addEventListener('click', () => {
+  localStorage.setItem('wordwise-voice-style', voiceGenderSelect.value);
+  const selected = voiceSelect.value !== '' ? availableVoices[Number(voiceSelect.value)] : null;
+  if (selected) localStorage.setItem('wordwise-voice-id', selected.name + '|' + selected.lang);
+  else localStorage.removeItem('wordwise-voice-id');
+  showToast('Voice settings saved on this device');
 });
 voiceSelect.addEventListener('change', () => {
   const voice = voiceSelect.value !== '' ? availableVoices[Number(voiceSelect.value)] : null;
