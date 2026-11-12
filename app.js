@@ -451,3 +451,96 @@ document.addEventListener('keydown', event => {
     $('#savedMeaningsModal').classList.remove('open');
   }
 });
+
+
+// WordWise Plus: paragraph translation, PDF text extraction/OCR, and speech controls.
+(function initWordWisePlus(){
+  const $p = (s) => document.querySelector(s);
+  const languages = [
+    ["ur","Urdu — اردو"],["pa","Punjabi (Pakistan) — پنجابی"],["sd","Sindhi — سنڌي"],["skr","Saraiki — سرائیکی"],
+    ["en","English"],["ar","Arabic"],["hi","Hindi"],["es","Spanish"],["fr","French"],["de","German"],["it","Italian"],["pt","Portuguese"],["ru","Russian"],["zh-CN","Chinese (Simplified)"],["zh-TW","Chinese (Traditional)"],["ja","Japanese"],["ko","Korean"],["nl","Dutch"],["bn","Bengali"],["tr","Turkish"],["fa","Persian"],["ps","Pashto"],["gu","Gujarati"],["mr","Marathi"],["ta","Tamil"],["te","Telugu"],["ml","Malayalam"],["kn","Kannada"],["or","Odia"],["as","Assamese"],["ne","Nepali"],["si","Sinhala"],["th","Thai"],["vi","Vietnamese"],["id","Indonesian"],["ms","Malay"],["fil","Filipino"],["sw","Swahili"],["am","Amharic"],["ha","Hausa"],["yo","Yoruba"],["ig","Igbo"],["zu","Zulu"],["af","Afrikaans"],["sq","Albanian"],["hy","Armenian"],["az","Azerbaijani"],["eu","Basque"],["be","Belarusian"],["bs","Bosnian"],["bg","Bulgarian"],["ca","Catalan"],["hr","Croatian"],["cs","Czech"],["da","Danish"],["et","Estonian"],["fi","Finnish"],["gl","Galician"],["ka","Georgian"],["el","Greek"],["he","Hebrew"],["hu","Hungarian"],["is","Icelandic"],["ga","Irish"],["kk","Kazakh"],["km","Khmer"],["ky","Kyrgyz"],["lo","Lao"],["lv","Latvian"],["lt","Lithuanian"],["lb","Luxembourgish"],["mk","Macedonian"],["mg","Malagasy"],["mt","Maltese"],["mn","Mongolian"],["my","Myanmar"],["no","Norwegian"],["pl","Polish"],["ro","Romanian"],["sr","Serbian"],["sk","Slovak"],["sl","Slovenian"],["so","Somali"],["sv","Swedish"],["tg","Tajik"],["tk","Turkmen"],["uk","Ukrainian"],["uz","Uzbek"],["cy","Welsh"],["yi","Yiddish"],["la","Latin"],["eo","Esperanto"],["haw","Hawaiian"],["ceb","Cebuano"],["jv","Javanese"],["su","Sundanese"],["ny","Chichewa"],["co","Corsican"],["ht","Haitian Creole"],["ku","Kurdish"],["sd","Sindhi"]
+  ];
+  const uniqueLanguages = [...new Map(languages.map(x=>[x[0],x])).values()];
+  const panel = document.createElement('section');
+  panel.className = 'plus-panel';
+  panel.id = 'sentence-tools';
+  panel.innerHTML = '<div class="section-kicker">WORDWISE PLUS</div><h2>Translate a sentence, paragraph or PDF</h2><p class="plus-intro">Paste text or upload a PDF. WordWise will translate the text and show a sentence-by-sentence version where the provider supports the selected language.</p><label for="paragraphInput">Your text</label><textarea id="paragraphInput" rows="6" placeholder="Write or paste a complete sentence or paragraph here…"></textarea><div class="plus-controls"><div><label for="plusTargetLanguage">Translate into</label><select id="plusTargetLanguage"></select></div><button id="translateParagraph" class="translate-button" type="button">Translate & explain →</button></div><div class="pdf-controls"><label for="pdfUpload">PDF scanner (select a PDF)</label><input id="pdfUpload" type="file" accept="application/pdf,.pdf"><button id="scanPdf" class="translate-button" type="button">Extract PDF text / OCR</button><span id="pdfStatus" class="api-note" role="status">Text-based PDFs are extracted directly. Scanned pages may need OCR and can take longer.</span></div><div id="paragraphOutput" class="paragraph-output" aria-live="polite"><span class="translation-placeholder">Your translation and sentence meanings will appear here.</span></div><div class="speech-controls"><strong>Voice controls</strong><button type="button" id="speechPause">Ⅱ Pause</button><button type="button" id="speechResume">▶ Resume</button><button type="button" id="speechStop">■ Stop</button><span id="speechState" class="api-note">Control spoken text while it is playing.</span></div>';
+  const features = document.querySelector('.features');
+  (features || document.querySelector('main')).before(panel);
+  const target = $p('#plusTargetLanguage');
+  target.innerHTML = uniqueLanguages.map(([code,name])=>'<option value="'+code+'">'+name+'</option>').join('');
+  target.value='ur';
+
+  const sourceText = (text) => text.trim();
+  async function translateAuto(text, targetCode) {
+    const chunks = text.match(/[\s\S]{1,430}(?:\s|$)|[\s\S]{1,430}/g) || [];
+    const translated = [];
+    for (const chunk of chunks) {
+      const url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(chunk.trim())+'&langpair='+encodeURIComponent('autodetect|'+targetCode);
+      const response=await fetch(url);
+      if(!response.ok) throw new Error('Translation service HTTP '+response.status);
+      const data=await response.json();
+      const value=data?.responseData?.translatedText;
+      if(!value || Number(data.responseStatus)!==200) throw new Error(data?.responseDetails || 'Provider did not return a translation for this language.');
+      translated.push(value);
+    }
+    return translated.join(' ');
+  }
+  $p('#translateParagraph').addEventListener('click', async()=>{
+    const text=sourceText($p('#paragraphInput').value);
+    const out=$p('#paragraphOutput');
+    if(!text){out.textContent='Please enter a sentence or paragraph first.';return;}
+    const btn=$p('#translateParagraph'), code=target.value;
+    btn.disabled=true;btn.textContent='Translating…';out.textContent='Translating your text. Please wait…';
+    try{
+      const whole=await translateAuto(text,code);
+      const sentences=text.match(/[^.!?۔]+[.!?۔]?/gu)?.map(s=>s.trim()).filter(Boolean)||[text];
+      const parts=[];
+      for(const sentence of sentences.slice(0,30)){
+        try{parts.push({source:sentence,translated:await translateAuto(sentence,code)});}
+        catch(_){parts.push({source:sentence,translated:'Sentence translation was unavailable.'});}
+      }
+      const langName=uniqueLanguages.find(x=>x[0]===code)?.[1]||code;
+      out.innerHTML='<div class="localized-heading"><h3>Full translation — '+escapeHtml(langName)+'</h3><button type="button" class="text-speak-button" id="speakParagraphResult">🔊 Listen</button></div><p class="paragraph-full">'+escapeHtml(whole)+'</p><h3>Sentence-by-sentence meaning</h3>'+parts.map((p,i)=>'<article class="sentence-meaning"><b>'+ (i+1)+'. '+escapeHtml(p.source)+'</b><p>'+escapeHtml(p.translated)+'</p></article>').join('')+'<p class="api-note">This is a machine translation, not a human-written interpretation. Verify important or formal translations.</p>';
+      $p('#speakParagraphResult').addEventListener('click',()=>window.speechSynthesis&&speakText(whole,code));
+    }catch(err){out.textContent='Translation could not be completed: '+err.message+' The provider may not support this language pair.';}
+    finally{btn.disabled=false;btn.textContent='Translate & explain →';}
+  });
+
+  $p('#scanPdf').addEventListener('click',async()=>{
+    const file=$p('#pdfUpload').files[0], status=$p('#pdfStatus'), textarea=$p('#paragraphInput');
+    if(!file){status.textContent='Please choose a PDF file first.';return;}
+    if(!window.pdfjsLib){status.textContent='PDF reader could not load. Check your internet connection and reload.';return;}
+    status.textContent='Reading PDF…';
+    try{
+      const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+      let allText='';
+      const pageCount=Math.min(pdf.numPages,20);
+      for(let n=1;n<=pageCount;n++){
+        status.textContent='Reading page '+n+' of '+pageCount+'…';
+        const page=await pdf.getPage(n), content=await page.getTextContent();
+        let pageText=content.items.map(item=>item.str).join(' ').trim();
+        if(pageText.length<20){
+          status.textContent='Scanned page '+n+': preparing OCR…';
+          if(!window.Tesseract){
+            await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);});
+          }
+          const viewport=page.getViewport({scale:1.5}), canvas=document.createElement('canvas');
+          canvas.width=viewport.width;canvas.height=viewport.height;
+          await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+          const result=await window.Tesseract.recognize(canvas,'eng+urd');
+          pageText=result.data.text||'';
+        }
+        allText+='\n\n'+pageText;
+      }
+      textarea.value=allText.trim();
+      status.textContent='Finished. Extracted text from '+pageCount+' page(s). Review OCR text for mistakes before translating.';
+      if(pdf.numPages>20) status.textContent+=' Only the first 20 pages were processed.';
+    }catch(err){status.textContent='PDF could not be read: '+err.message;}
+  });
+  if('speechSynthesis' in window){
+    $p('#speechPause').addEventListener('click',()=>{window.speechSynthesis.pause();$p('#speechState').textContent='Speech paused.';});
+    $p('#speechResume').addEventListener('click',()=>{window.speechSynthesis.resume();$p('#speechState').textContent='Speech resumed.';});
+    $p('#speechStop').addEventListener('click',()=>{window.speechSynthesis.cancel();$p('#speechState').textContent='Speech stopped.';});
+  }else{$p('#speechState').textContent='Speech controls are not supported in this browser.';}
+})();
