@@ -486,7 +486,7 @@ document.addEventListener('keydown', event => {
   const panel = document.createElement('section');
   panel.className = 'plus-panel';
   panel.id = 'sentence-tools';
-  panel.innerHTML = '<div class="section-kicker">WORDWISE PLUS</div><h2>Translate a sentence, paragraph or PDF</h2><p class="plus-intro">Paste text or upload a PDF. WordWise will translate the text and show a sentence-by-sentence version where the provider supports the selected language.</p><label for="paragraphInput">Your text</label><textarea id="paragraphInput" rows="6" placeholder="Write or paste a complete sentence or paragraph here…"></textarea><div class="plus-controls"><div><label for="plusTargetLanguage">Translate into</label><select id="plusTargetLanguage"></select></div><button id="translateParagraph" class="translate-button" type="button">Translate & explain →</button></div><div class="pdf-controls"><label for="pdfUpload">PDF scanner (select a PDF)</label><input id="pdfUpload" type="file" accept="application/pdf,.pdf"><button id="scanPdf" class="translate-button" type="button">Extract PDF text / OCR</button><span id="pdfStatus" class="api-note" role="status">Text-based PDFs are extracted directly. Scanned pages may need OCR and can take longer.</span></div><div id="paragraphOutput" class="paragraph-output" aria-live="polite"><span class="translation-placeholder">Your translation and sentence meanings will appear here.</span></div><div class="speech-controls"><strong>Voice controls</strong><button type="button" id="speechPause">Ⅱ Pause</button><button type="button" id="speechResume">▶ Resume</button><button type="button" id="speechStop">■ Stop</button><span id="speechState" class="api-note">Control spoken text while it is playing.</span></div>';
+  panel.innerHTML = '<div class="section-kicker">WORDWISE PLUS</div><h2>Translate a sentence, paragraph or PDF</h2><p class="plus-intro">Paste text or upload a PDF. WordWise will translate the text and show a sentence-by-sentence version where the provider supports the selected language.</p><label for="paragraphInput">Your text</label><textarea id="paragraphInput" rows="6" placeholder="Write or paste a complete sentence or paragraph here…"></textarea><div class="voice-input-controls"><label for="voiceInputLanguage">Speak in</label><select id="voiceInputLanguage"><option value="ur-PK">Urdu (Pakistan)</option><option value="en-US">English</option><option value="pa-IN">Punjabi</option><option value="hi-IN">Hindi</option><option value="ar-SA">Arabic</option></select><button id="startVoiceInput" class="translate-button" type="button">🎙️ Speak instruction</button><span id="voiceInputStatus" class="api-note" role="status">Press the microphone and speak. The recognized text will be translated into your selected target language.</span></div><div class="plus-controls"><div><label for="plusTargetLanguage">Translate into</label><select id="plusTargetLanguage"></select></div><button id="translateParagraph" class="translate-button" type="button">Translate & explain →</button></div><div class="pdf-controls"><label for="pdfUpload">PDF scanner (select a PDF)</label><input id="pdfUpload" type="file" accept="application/pdf,.pdf"><button id="scanPdf" class="translate-button" type="button">Extract PDF text / OCR</button><span id="pdfStatus" class="api-note" role="status">Text-based PDFs are extracted directly. Scanned pages may need OCR and can take longer.</span></div><div id="paragraphOutput" class="paragraph-output" aria-live="polite"><span class="translation-placeholder">Your translation and sentence meanings will appear here.</span></div><div class="speech-controls"><strong>Voice controls</strong><button type="button" id="speechPause">Ⅱ Pause</button><button type="button" id="speechResume">▶ Resume</button><button type="button" id="speechStop">■ Stop</button><span id="speechState" class="api-note">Control spoken text while it is playing.</span></div>';
   const features = document.querySelector('.features');
   (features || document.querySelector('main')).before(panel);
   const target = $p('#plusTargetLanguage');
@@ -508,6 +508,49 @@ document.addEventListener('keydown', event => {
     }
     return translated.join(' ');
   }
+  let speakAfterVoiceTranslation = false;
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const voiceInputButton = $p('#startVoiceInput');
+  if (SpeechRecognitionAPI) {
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    voiceInputButton.addEventListener('click', () => {
+      recognition.lang = $p('#voiceInputLanguage').value;
+      $p('#voiceInputStatus').textContent = 'Listening… please speak now.';
+      voiceInputButton.disabled = true;
+      try { recognition.start(); }
+      catch (error) {
+        voiceInputButton.disabled = false;
+        $p('#voiceInputStatus').textContent = 'Microphone could not start. Allow microphone permission and try again.';
+      }
+    });
+    recognition.onresult = (event) => {
+      const spokenText = event.results?.[0]?.[0]?.transcript?.trim();
+      if (!spokenText) {
+        $p('#voiceInputStatus').textContent = 'No speech was detected. Please try again.';
+        return;
+      }
+      $p('#paragraphInput').value = spokenText;
+      $p('#voiceInputStatus').textContent = 'You said: “' + spokenText + '” — translating now…';
+      speakAfterVoiceTranslation = true;
+      $p('#translateParagraph').click();
+    };
+    recognition.onerror = (event) => {
+      const messages = {
+        'not-allowed': 'Microphone permission was blocked. Allow microphone access in your browser settings.',
+        'no-speech': 'No speech detected. Please speak a little louder and try again.',
+        'audio-capture': 'No microphone was found. Check your microphone connection.'
+      };
+      $p('#voiceInputStatus').textContent = messages[event.error] || ('Voice recognition error: ' + event.error);
+    };
+    recognition.onend = () => { voiceInputButton.disabled = false; };
+  } else {
+    voiceInputButton.disabled = true;
+    $p('#voiceInputStatus').textContent = 'Voice input is not supported here. Open WordWise in an updated Chrome or Edge browser.';
+  }
+
   $p('#translateParagraph').addEventListener('click', async()=>{
     const text=sourceText($p('#paragraphInput').value);
     const out=$p('#paragraphOutput');
@@ -525,6 +568,7 @@ document.addEventListener('keydown', event => {
       const langName=uniqueLanguages.find(x=>x[0]===code)?.[1]||code;
       out.innerHTML='<div class="localized-heading"><h3>Full translation — '+escapeHtml(langName)+'</h3><button type="button" class="text-speak-button" id="speakParagraphResult">🔊 Listen</button></div><p class="paragraph-full">'+escapeHtml(whole)+'</p><h3>Sentence-by-sentence meaning</h3>'+parts.map((p,i)=>'<article class="sentence-meaning"><b>'+ (i+1)+'. '+escapeHtml(p.source)+'</b><p>'+escapeHtml(p.translated)+'</p></article>').join('')+'<p class="api-note">This is a machine translation, not a human-written interpretation. Verify important or formal translations.</p>';
       $p('#speakParagraphResult').addEventListener('click',()=>window.speechSynthesis&&speakText(whole,code));
+      if (speakAfterVoiceTranslation) { speakAfterVoiceTranslation = false; speakText(whole, code); $p('#voiceInputStatus').textContent = 'Voice answer is playing. You can speak another instruction anytime.'; }
     }catch(err){out.textContent='Translation could not be completed: '+err.message+' The provider may not support this language pair.';}
     finally{btn.disabled=false;btn.textContent='Translate & explain →';}
   });
