@@ -58,9 +58,10 @@
             <div class="card-heading"><div><span class="mini-icon">♫</span><h3>Voice settings</h3></div></div>
             <p class="muted">Choose a voice installed on your device. WordWise matches the spoken language to the selected text.</p>
             <label for="voiceGenderSelect">Voice preference</label>
-            <select id="voiceGenderSelect"><option value="female">Prefer female voice</option><option value="male">Prefer male voice</option><option value="default">System default</option></select>
+            <select id="voiceGenderSelect"><option value="male" selected>Prefer male voice</option><option value="female">Prefer female voice</option><option value="default">System default</option></select>
             <label for="voiceSelect">Available device voice</label>
             <select id="voiceSelect"><option value="">Loading device voices…</option></select>
+            <button id="saveVoiceSettings" class="translate-button" type="button">Save voice settings</button>
             <p id="voiceStatus" class="api-note" role="status">Voice list is provided by your browser or operating system.</p>
           </div>
           <div class="tip-card"><span class="tip-spark">✳</span><div><strong>Word tip</strong><p>Learning a new word? Try using it in a sentence to help remember it.</p></div></div>
