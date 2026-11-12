@@ -73,3 +73,9 @@ This project is provided for learning and personal use. Add a license file if yo
 
 ### Important limitations
 The free MyMemory endpoint may reject some languages or language pairs, particularly regional languages such as Saraiki. The interface lists these requested languages, but does not guarantee provider coverage. Paragraph translations and sentence breakdowns are machine-generated and should be checked by a fluent speaker for important use. PDF/OCR libraries load from public CDNs and require internet access. The current explanation view gives sentence-by-sentence translations; it is not an AI-generated semantic summary.
+
+## Voice input and spoken replies
+
+The WordWise Plus paragraph tool now includes a microphone input option in supported browsers. Choose a recognition language (for example Urdu, English, Punjabi or Hindi), press **Speak instruction**, and say a sentence or paragraph. The recognized text is placed in the text box, translated into the selected target language, and the translated result is read aloud automatically. The normal Listen and Pause/Resume/Stop controls remain available.
+
+Voice recognition uses the browser Web Speech API and is most consistently available in current Chrome and Edge. Browser/device microphone permission is required; recognition language availability varies by browser and operating system. Speech recognition may send audio to the browser vendor's recognition service. This is a voice-enabled translation workflow, not a general-purpose AI assistant: it translates the spoken text rather than answering arbitrary questions with independent knowledge. Spoken output depends on installed system voices.
