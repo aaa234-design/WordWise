@@ -390,7 +390,29 @@ async function searchWord(rawWord) {
     saveHistory(word);
   } catch (error) {
     if (thisSearch !== searchSequence) return;
-    resultArea.innerHTML = '<div class="empty-state"><div class="empty-icon">?</div><h2>We couldn’t find that word.</h2><p>' + escapeHtml(error.message) + '</p></div>';
+    // If the English dictionary has no entry, still try translating the real-world
+    // word/phrase with source-language auto detection instead of stopping at 404.
+    try {
+      const target = document.querySelector('#plusTargetLanguage')?.value || 'ur';
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) +
+        '&langpair=' + encodeURIComponent('autodetect|' + target);
+      const fallbackResponse = await fetch(url);
+      const fallbackData = await fallbackResponse.json();
+      const translated = fallbackData?.responseData?.translatedText;
+      if (fallbackResponse.ok && translated && Number(fallbackData.responseStatus) === 200) {
+        if (thisSearch !== searchSequence) return;
+        resultArea.innerHTML = '<div class="word-top"><div><h2 class="word-title">' + escapeHtml(word) +
+          '</h2><div class="phonetic">Dictionary definition unavailable — automatic language detection used</div></div></div>' +
+          '<div class="part-of-speech">Translation / meaning</div><p class="definition">' + escapeHtml(translated) +
+          '</p><p class="api-note">This is a machine translation, not a verified dictionary definition.</p>';
+        translationResult.textContent = translated;
+        localizedDetails.innerHTML = '<div class="localized-empty">The dictionary provider did not return a formal definition for this term. The translation above is the available meaning.</div>';
+        saveHistory(word);
+        return;
+      }
+    } catch (_) { /* Show the original lookup error below. */ }
+    if (thisSearch !== searchSequence) return;
+    resultArea.innerHTML = '<div class="empty-state"><div class="empty-icon">?</div><h2>We couldn’t find a definition or translation.</h2><p>' + escapeHtml(error.message) + ' Try the paragraph translator below or choose another target language.</p></div>';
     showToast(error.message);
   }
 }
