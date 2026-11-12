@@ -61,3 +61,15 @@ This project is provided for learning and personal use. Add a license file if yo
 - Saved meanings, favourites, search history and voice preferences are stored in this browser's local storage. They are not synced between devices; clearing browser site data can remove them.
 - Choose an installed voice from **Available device voice**. Female/male are best-effort preferences because browsers do not expose a reliable universal voice-gender field. Voice availability varies by language and operating system.
 - Translation is machine-generated and may be imperfect; use a trusted human translator for high-stakes or formal material.
+
+
+## WordWise Plus (latest update)
+
+- Paragraph and sentence translation panel with automatic source-language detection where supported by MyMemory.
+- Sentence-by-sentence translated output, with listen support.
+- Language picker expanded to 100+ language entries, including Urdu, Punjabi, Sindhi and Saraiki codes. Actual availability depends on the translation provider; unsupported pairs return a provider error rather than a fabricated translation.
+- PDF text extraction using PDF.js. Image-only scanned pages attempt OCR using Tesseract.js (English and Urdu OCR data); OCR can make mistakes. The browser processes up to 20 pages per upload.
+- Pause, resume and stop controls for browser text-to-speech.
+
+### Important limitations
+The free MyMemory endpoint may reject some languages or language pairs, particularly regional languages such as Saraiki. The interface lists these requested languages, but does not guarantee provider coverage. Paragraph translations and sentence breakdowns are machine-generated and should be checked by a fluent speaker for important use. PDF/OCR libraries load from public CDNs and require internet access. The current explanation view gives sentence-by-sentence translations; it is not an AI-generated semantic summary.
