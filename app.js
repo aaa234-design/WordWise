@@ -569,7 +569,7 @@ document.addEventListener('keydown', event => {
       out.innerHTML='<div class="localized-heading"><h3>Full translation — '+escapeHtml(langName)+'</h3><button type="button" class="text-speak-button" id="speakParagraphResult">🔊 Listen</button></div><p class="paragraph-full">'+escapeHtml(whole)+'</p><h3>Sentence-by-sentence meaning</h3>'+parts.map((p,i)=>'<article class="sentence-meaning"><b>'+ (i+1)+'. '+escapeHtml(p.source)+'</b><p>'+escapeHtml(p.translated)+'</p></article>').join('')+'<p class="api-note">This is a machine translation, not a human-written interpretation. Verify important or formal translations.</p>';
       $p('#speakParagraphResult').addEventListener('click',()=>window.speechSynthesis&&speakText(whole,code));
       if (speakAfterVoiceTranslation) { speakAfterVoiceTranslation = false; speakText(whole, code); $p('#voiceInputStatus').textContent = 'Voice answer is playing. You can speak another instruction anytime.'; }
-    }catch(err){out.textContent='Translation could not be completed: '+err.message+' The provider may not support this language pair.';}
+    }catch(err){speakAfterVoiceTranslation=false;out.textContent='Translation could not be completed: '+err.message+' The provider may not support this language pair.';}
     finally{btn.disabled=false;btn.textContent='Translate & explain →';}
   });
 
